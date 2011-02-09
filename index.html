@@ -88,6 +88,12 @@ function parse(txt) {
         code += "scope." + line[1] + " = " + second
       } else if (line[0] == "`") {
         code += s()
+      } else if (line[0] == "goto") {
+        if (isNumeric(line[2])) {
+          code += "scope.pc =" + line[2] 
+        } else {
+          code += "scope.pc" + line[2] 
+        }
       }
     }
     code += "}"
@@ -98,20 +104,15 @@ function parse(txt) {
   compiled += "functions = [" + functions.join(",\n") + "\n];\n"
   
   
-  compiled += "i = 0;\n"
+  compiled += "scope.pc = 0;\n"
   compiled += "for (var j=0; j<100; j++) {\n" //"while (true) {\n"
-  compiled += "  if (i >= functions.length) {\n"
+  compiled += "  if (scope.pc >= functions.length) {\n"
   compiled += "    break;\n"
   compiled += "  }\n"
   //compiled += "  alert(i);"
-  compiled += "  func = functions[i];\n"
+  compiled += "  func = functions[scope.pc];\n"
   compiled += "  ret = func(scope);\n"
-  compiled += "  if ( !(ret === void 0) ) {\n"
-  //compiled += "    alert('i is something else ' + i);\n"
-  compiled += "    i = ret;\n"
-  compiled += "  } else {\n"
-  compiled += "    i++;\n"
-  compiled += "  }\n"
+  compiled += "    scope.pc++;\n"
   compiled += "}\n"
   
   console.log(compiled)
