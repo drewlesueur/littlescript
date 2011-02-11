@@ -10,8 +10,11 @@
       if (k.isNumeric(value)) {
         vars[name] = value;
       } else {
-        vars[name] = "scope." + value.replace(/(?:\.{2}([\w]+)\b)/g, function(a, b) {
-          return "[" + b + "]";
+        if (!k.startsWith(value, ".")) {
+          value = "." + value;
+        }
+        vars[name] = "scope" + value.replace(/(?:\.{2}([\w]+)\b)/g, function(a, b) {
+          return "[scope." + b + "]";
         });
       }
     }
@@ -36,7 +39,7 @@
         console.log(line.indexOf(" "));
       } else if (k.startsWith(line, "`")) {
         code += k.s(line, line.indexOf(" ") + 1);
-      } else {
+      } else if (k.startsWith(line, "#")) {} else {
         line = k.trimRight(line);
         line = line.replace(/\s+/, " ");
         line = line.split(" ");

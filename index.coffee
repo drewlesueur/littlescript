@@ -6,7 +6,10 @@ makeVars = (vars) ->
     if k.isNumeric value
       vars[name] = value
     else
-      vars[name] = "scope." + value.replace /(?:\.{2}([\w]+)\b)/g, (a,b) -> "[#{b}]" #using the bracket notation
+      if not k.startsWith(value, ".")
+        value = "." + value
+      vars[name] = "scope" + value.replace /(?:\.{2}([\w]+)\b)/g, (a,b) -> 
+        "[scope.#{b}]" #using the bracket notation
   vars  
 
 
@@ -27,6 +30,9 @@ parse = window.parse = (txt) ->
       console.log line.indexOf(" ")
     else if k.startsWith line, "`"
       code += k.s(line, line.indexOf(" ") + 1)
+    else if k.startsWith line, "#"
+      #pass
+      #if vs hash
     else 
       line = k.trimRight line
       line = line.replace /\s+/, " "
