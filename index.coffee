@@ -21,9 +21,12 @@ parse = window.parse = (txt) ->
     code = ""
     code += "function(scope) {"
     if k.startsWith(line, "string") || k.startsWith(line, '"')
-      code += "scope.so = \"" + k.s line, line.indexOf(" ") + 1 + '"'
+      code += "scope.so = \"" + k.s(line, line.indexOf(" ") + 1) + '"'
+      console.log line
+      console.log k.s line, (line.indexOf(" ") + 1)
+      console.log line.indexOf(" ")
     else if k.startsWith line, "`"
-      code += s line, line.indexOf " " + 1
+      code += k.s(line, line.indexOf(" ") + 1)
     else 
       line = k.trimRight line
       line = line.replace /\s+/, " "
@@ -41,7 +44,7 @@ parse = window.parse = (txt) ->
     scope = {}
     functions = [#{functions.join(",\n")}]
     scope.pc = 0
-    for (var j=0; j<100l j++) {
+    for (var j=0; j<100; j++) {
       if (scope.pc >= functions.length) {
         break;  
       }
