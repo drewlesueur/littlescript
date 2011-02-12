@@ -3,7 +3,17 @@
 <head>
 <script src="http://inc.the.tl/underscore.js"></script>
 <script src="http://inc.the.tl/k/index.js"></script>
+<script src="http://inc.the.tl/coffeescript.js"></script>
+<script src="http://inc.the.tl/jquery.js"></script>
 <script src="index.js"></script>
+<script type="text/coffeescript">
+  $(document).ready () ->
+  
+    code = localStorage['code']
+    if code then $('#code').val code
+    $("#code").bind "keyup", (e) ->
+      localStorage['code'] = $(this).val()
+</script>
 </head>
 <body>
 <input type="button" onclick="parse(document.getElementById('code').value)" value="Run">

@@ -13,9 +13,13 @@
         if (!k.startsWith(value, ".")) {
           value = "." + value;
         }
-        vars[name] = "scope" + value.replace(/(?:\.{2}([\w]+)\b)/g, function(a, b) {
+        value = value.replace(/(?:\.{2}([\w]+)\b)/g, function(a, b) {
           return "[scope." + b + "]";
         });
+        value = value.replace(/(?:\.(\w+)\b)/g, function(a, b) {
+          return "[\"" + b + "\"]";
+        });
+        vars[name] = "scope" + value;
       }
     }
     return vars;
@@ -24,8 +28,9 @@
     return _.template(str, makeVars(rawVars));
   };
   parse = window.parse = function(txt) {
-    var code, compiled, functions, index, line, _len;
+    var code, compiled, functions, index, line, scope, _len;
     functions = [];
+    scope = {};
     txt = txt.split("\n");
     for (index = 0, _len = txt.length; index < _len; index++) {
       line = txt[index];
@@ -37,6 +42,10 @@
         console.log(line);
         console.log(k.s(line, line.indexOf(" ") + 1));
         console.log(line.indexOf(" "));
+      } else if (k.startsWith(line, "str")) {
+        code += interpolate("{{varName}} = \"" + (k.s(line, line.indexOf(' ', 4) + 1)) + "\"", {
+          varName: k.s(line, 4, line.indexOf(" ", 4) - 4)
+        });
       } else if (k.startsWith(line, "`")) {
         code += k.s(line, line.indexOf(" ") + 1);
       } else if (k.startsWith(line, "#")) {} else {
@@ -51,16 +60,33 @@
             varName: line[1],
             varValue: line[2]
           });
+        } else if (line[1] === "=") {
+          code += interpolate("{{varName}} = {{varValue}}", {
+            varName: line[0],
+            varValue: line[2]
+          });
         } else if (line[0] === "goto") {
           code += interpolate("scope.pc = {{varValue}}", {
             varValue: line[1]
           });
+          code += "\n scope.ra = scope.pc + 1";
+        } else if (line[0] === "if") {
+          code += interpolate("if ({{condition}}) {\n  scope.pc = {{goto}}\n}", {
+            condition: line[1],
+            goto: line[2]
+          });
+        } else if (line[0] === "label") {
+          console.log("we have a label");
+          scope[line[1]] = index;
+          code += "//Label " + line[1] + "\n";
+        } else {
+
         }
       }
       code += "}";
       functions.push(code);
     }
-    compiled = "scope = {}\nfunctions = [" + (functions.join(",\n")) + "]\nscope.pc = 0\nfor (var j=0; j<100; j++) {\n  if (scope.pc >= functions.length) {\n    break;  \n  }\n  functions[scope.pc](scope);\n  scope.pc ++\n}";
+    compiled = "scope = " + (JSON.stringify(scope)) + "\nfunctions = [" + (functions.join(",\n")) + "]\nscope.pc = 0\nfor (var j=0; j<100; j++) {\n  if (scope.pc >= functions.length) {\n    break;  \n  }\n  functions[scope.pc](scope);\n  scope.pc ++\n}";
     console.log(compiled);
     return eval(compiled);
   };

@@ -8,8 +8,11 @@ makeVars = (vars) ->
     else
       if not k.startsWith(value, ".")
         value = "." + value
-      vars[name] = "scope" + value.replace /(?:\.{2}([\w]+)\b)/g, (a,b) -> 
+      value = value.replace /(?:\.{2}([\w]+)\b)/g, (a,b) -> 
         "[scope.#{b}]" #using the bracket notation
+      value = value.replace /(?:\.(\w+)\b)/g, (a,b) ->
+        "[\"#{b}\"]"
+      vars[name] = "scope" + value
   vars  
 
 
@@ -18,6 +21,7 @@ interpolate = (str, rawVars) ->
 
 parse = window.parse = (txt) ->
   functions = []
+  scope = {}
   txt = txt.split "\n"
   for line, index in txt
     line = k.trimLeft line
@@ -28,6 +32,9 @@ parse = window.parse = (txt) ->
       console.log line
       console.log k.s line, (line.indexOf(" ") + 1)
       console.log line.indexOf(" ")
+    else if k.startsWith line, "str"
+      code += interpolate "{{varName}} = \"#{k.s(line, line.indexOf(' ', 4)+1)}\"", 
+        varName: k.s(line, 4, line.indexOf(" ", 4)-4)
     else if k.startsWith line, "`"
       code += k.s(line, line.indexOf(" ") + 1)
     else if k.startsWith line, "#"
@@ -40,14 +47,28 @@ parse = window.parse = (txt) ->
       if line[0] is "set" or line[0] is "="
         if not line[2] then line[2] = "so"
         code += interpolate "{{varName}} = {{varValue}}", varName: line[1], varValue: line[2] 
-        
+      else if line[1] is "="
+        code += interpolate "{{varName}} = {{varValue}}", varName: line[0], varValue: line[2] 
       else if line[0] is "goto"
         code += interpolate "scope.pc = {{varValue}}", varValue: line[1]
+        code += "\n scope.ra = scope.pc + 1"
+      else if line[0] is "if"
+        code += interpolate """
+          if ({{condition}}) {
+            scope.pc = {{goto}}
+          }
+        """, condition: line[1], goto: line[2] 
+      else if line[0] is "label"
+        console.log "we have a label"
+        scope[line[1]] = index #presetting the scope
+        code += "//Label #{line[1]}\n"
+      else
+        
     code += "}"
     functions.push(code)
  
   compiled = """
-    scope = {}
+    scope = #{JSON.stringify scope}
     functions = [#{functions.join(",\n")}]
     scope.pc = 0
     for (var j=0; j<100; j++) {
