@@ -30,6 +30,19 @@ parse = window.parse = (txt) ->
   scope.split_lines = []
   scope.set_pc = -1
   scope.stack = []
+
+  end_info = {} 
+  end_stack = []
+
+  #first pass
+  for line, index in txt
+    first_word = k.s line, 0, line.indexOf(" "))
+    if first_word in ["if", "def", "begin"]
+      end_stack.push index
+    if first_word is "end"
+      end_val = end_stack.pop()
+      end_info[end_val] = index
+
   for line, index in txt
     line = k.trimLeft line
     code = ""

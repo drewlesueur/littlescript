@@ -32,7 +32,7 @@
     return _.template(str, makeVars(rawVars));
   };
   parse = window.parse = function(txt) {
-    var args, code, compiled, functions, index, line, ret, scope, _len;
+    var args, code, compiled, end_info, end_stack, end_val, functions, index, line, ret, scope, _len, _len2, _ref;
     functions = [];
     scope = {};
     txt = txt.split("\n");
@@ -40,7 +40,19 @@
     scope.split_lines = [];
     scope.set_pc = -1;
     scope.stack = [];
+    end_info = {};
+    end_stack = [];
     for (index = 0, _len = txt.length; index < _len; index++) {
+      line = txt[index];
+      if ((_ref = line[0]) === "if" || _ref === "def" || _ref === "begin") {
+        end_stack.push(index);
+      }
+      if (line[0] === "end") {
+        end_val = end_stack.pop();
+        end_info[end_val] = index;
+      }
+    }
+    for (index = 0, _len2 = txt.length; index < _len2; index++) {
       line = txt[index];
       line = k.trimLeft(line);
       code = "";
