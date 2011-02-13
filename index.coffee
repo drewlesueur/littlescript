@@ -19,7 +19,6 @@ makeVars = (vars) ->
       vars[name] = "scope" + value
   vars  
 
-
 interpolate = (str, rawVars) ->
   _.template str, makeVars rawVars
 
@@ -28,6 +27,9 @@ parse = window.parse = (txt) ->
   scope = {}
   txt = txt.split "\n"
   scope.lines = txt
+  scope.split_lines = []
+  scope.set_pc = -1
+  scope.stack = []
   for line, index in txt
     line = k.trimLeft line
     code = ""
@@ -41,7 +43,7 @@ parse = window.parse = (txt) ->
       code += interpolate "{{varName}} = \"#{k.s(line, line.indexOf(' ', 4)+1)}\"", 
         varName: k.s(line, 4, line.indexOf(" ", 4)-4)
     else if k.startsWith line, "`"
-      code += k.s(line, line.indexOf(" ") + 1)
+      code += "scope.so = " +  k.s(line, line.indexOf(" ") + 1)
     else if k.startsWith line, "#"
       #pass
       #if vs hash
@@ -49,13 +51,14 @@ parse = window.parse = (txt) ->
       line = k.trimRight line
       line = line.replace /\s+/, " "
       line = line.split " "
+      scope.split_lines[index] = line
       if line[0] is "set" or line[0] is "="
         if not line[2] then line[2] = "so"
         code += interpolate "{{varName}} = {{varValue}}", varName: line[1], varValue: line[2] 
       else if line[1] is "="
         code += interpolate "{{varName}} = {{varValue}}", varName: line[0], varValue: line[2] 
       else if line[0] is "goto"
-        code += interpolate "scope.pc = {{varValue}}", varValue: line[1]
+        code += interpolate "scope.set_pc = {{varValue}}", varValue: line[1]
       else if line[0] is "if"
         code += interpolate """
           if ({{condition}}) {
@@ -68,11 +71,27 @@ parse = window.parse = (txt) ->
         code += "//Label #{line[1]}\n"
       else if line[0] == "exit"
         code += "scope.__close__ = true"
+      else if line[0] == "incr"
+        if not line[2] then line[2] = "1"
+        code += interpolate "{{varName}} = {{varName}} + {{varValue}}",
+          varName: line[1]
+          varValue: line[2]
+      else if line[0] == "log"
+        code += interpolate "console.log({{varName}})", varName: line[1]
+      else if line[1] == "is"
+        code += interpolate "scope.so = {{val1}} == {{val2}}",
+          val1: line[0]
+          val2: line[2]
+      else if line[0] == "return"
+        ret = makeVars k.s line, 1
+        code += "scope.ret = [" + ret.join(", ") + "]\n"
+        code += "scope.set_pc = scope.stack.pop()"
       else if line[0] != ""
+        #code += "scope.set_pc = scope.call" tried to implement this in littlescipt
         args = makeVars k.s line, 1
         code += "scope.args = [" + args.join(", ") + "]\n"
-        code += interpolate "scope.pc = {{varValue}}\n", varValue: line[0]
-        
+        code += "scope.stack.push(scope.pc)\n"
+        code += interpolate "scope.set_pc = {{varValue}}\n", varValue: line[0]
     code += "}"
     functions.push(code)
  
@@ -80,15 +99,22 @@ parse = window.parse = (txt) ->
     scope = #{JSON.stringify scope}
     functions = [#{functions.join(",\n")}]
     scope.pc = 0
+    scope.last_pc = 0
+    scope.second_last_pc = 0
     for (var j=0; j<100; j++) {
       if (scope.pc >= functions.length || scope.__close__ == true) {
         break;  
       }
       console.log("Executing: " + scope.lines[scope.pc])
       functions[scope.pc](scope);
+      scope.not = ! scope.so
+      scope.second_last_pc = scope.last_pc
+      scope.last_pc = scope.pc
+      if (scope.set_pc != -1) {
+        scope.pc = scope.set_pc
+        scope.set_pc = -1
+      }
       scope.pc ++
     }
   """
   return compiled
-
-
