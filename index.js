@@ -9,6 +9,10 @@
       value = vars[name];
       if (k.isNumeric(value)) {
         vars[name] = value;
+      } else if (value === "object" || value === "{}") {
+        vars[name] = "{}";
+      } else if (value === "array" || value === "[]") {
+        vars[name] = "[]";
       } else {
         if (!k.startsWith(value, ".")) {
           value = "." + value;

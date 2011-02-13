@@ -5,6 +5,10 @@ makeVars = (vars) ->
   for name, value of vars
     if k.isNumeric value
       vars[name] = value
+    else if value in ["object", "{}"]
+      vars[name] = "{}"
+    else if value in ["array", "[]"]
+      vars[name] = "[]"
     else
       if not k.startsWith(value, ".")
         value = "." + value
