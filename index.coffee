@@ -27,6 +27,7 @@ parse = window.parse = (txt) ->
   functions = []
   scope = {}
   txt = txt.split "\n"
+  scope.lines = txt
   for line, index in txt
     line = k.trimLeft line
     code = ""
@@ -44,7 +45,7 @@ parse = window.parse = (txt) ->
     else if k.startsWith line, "#"
       #pass
       #if vs hash
-    else 
+    else
       line = k.trimRight line
       line = line.replace /\s+/, " "
       line = line.split " "
@@ -55,7 +56,6 @@ parse = window.parse = (txt) ->
         code += interpolate "{{varName}} = {{varValue}}", varName: line[0], varValue: line[2] 
       else if line[0] is "goto"
         code += interpolate "scope.pc = {{varValue}}", varValue: line[1]
-        code += "\n scope.ra = scope.pc + 1"
       else if line[0] is "if"
         code += interpolate """
           if ({{condition}}) {
@@ -66,7 +66,12 @@ parse = window.parse = (txt) ->
         console.log "we have a label"
         scope[line[1]] = index #presetting the scope
         code += "//Label #{line[1]}\n"
-      else
+      else if line[0] == "exit"
+        code += "scope.__close__ = true"
+      else if line[0] != ""
+        args = makeVars k.s line, 1
+        code += "scope.args = [" + args.join(", ") + "]\n"
+        code += interpolate "scope.pc = {{varValue}}\n", varValue: line[0]
         
     code += "}"
     functions.push(code)
@@ -76,12 +81,14 @@ parse = window.parse = (txt) ->
     functions = [#{functions.join(",\n")}]
     scope.pc = 0
     for (var j=0; j<100; j++) {
-      if (scope.pc >= functions.length) {
+      if (scope.pc >= functions.length || scope.__close__ == true) {
         break;  
       }
+      console.log("Executing: " + scope.lines[scope.pc])
       functions[scope.pc](scope);
       scope.pc ++
     }
   """
-  console.log compiled
-  eval compiled
+  return compiled
+
+

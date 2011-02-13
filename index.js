@@ -32,10 +32,11 @@
     return _.template(str, makeVars(rawVars));
   };
   parse = window.parse = function(txt) {
-    var code, compiled, functions, index, line, scope, _len;
+    var args, code, compiled, functions, index, line, scope, _len;
     functions = [];
     scope = {};
     txt = txt.split("\n");
+    scope.lines = txt;
     for (index = 0, _len = txt.length; index < _len; index++) {
       line = txt[index];
       line = k.trimLeft(line);
@@ -73,7 +74,6 @@
           code += interpolate("scope.pc = {{varValue}}", {
             varValue: line[1]
           });
-          code += "\n scope.ra = scope.pc + 1";
         } else if (line[0] === "if") {
           code += interpolate("if ({{condition}}) {\n  scope.pc = {{goto}}\n}", {
             condition: line[1],
@@ -83,15 +83,20 @@
           console.log("we have a label");
           scope[line[1]] = index;
           code += "//Label " + line[1] + "\n";
-        } else {
-
+        } else if (line[0] === "exit") {
+          code += "scope.__close__ = true";
+        } else if (line[0] !== "") {
+          args = makeVars(k.s(line, 1));
+          code += "scope.args = [" + args.join(", ") + "]\n";
+          code += interpolate("scope.pc = {{varValue}}\n", {
+            varValue: line[0]
+          });
         }
       }
       code += "}";
       functions.push(code);
     }
-    compiled = "scope = " + (JSON.stringify(scope)) + "\nfunctions = [" + (functions.join(",\n")) + "]\nscope.pc = 0\nfor (var j=0; j<100; j++) {\n  if (scope.pc >= functions.length) {\n    break;  \n  }\n  functions[scope.pc](scope);\n  scope.pc ++\n}";
-    console.log(compiled);
-    return eval(compiled);
+    compiled = "scope = " + (JSON.stringify(scope)) + "\nfunctions = [" + (functions.join(",\n")) + "]\nscope.pc = 0\nfor (var j=0; j<100; j++) {\n  if (scope.pc >= functions.length || scope.__close__ == true) {\n    break;  \n  }\n  console.log(\"Executing: \" + scope.lines[scope.pc])\n  functions[scope.pc](scope);\n  scope.pc ++\n}";
+    return compiled;
   };
 }).call(this);

@@ -13,10 +13,15 @@
     if code then $('#code').val code
     $("#code").bind "keyup", (e) ->
       localStorage['code'] = $(this).val()
+    $('#btn_run').click () ->
+      code = $('#code').val()
+      js = parse code
+      console.log js
+      eval js
 </script>
 </head>
 <body>
-<input type="button" onclick="parse(document.getElementById('code').value)" value="Run">
+  <input id="btn_run" type="button" value="Run">
 <br>
 <textarea rows="100" cols="100" id="code">
 string hello world
