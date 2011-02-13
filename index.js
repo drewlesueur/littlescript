@@ -32,7 +32,7 @@
     return _.template(str, makeVars(rawVars));
   };
   parse = window.parse = function(txt) {
-    var args, code, compiled, end_info, end_stack, end_val, functions, index, line, ret, scope, _len, _len2, _ref;
+    var args, code, compiled, condition, end_info, end_pos, end_stack, end_val, first_word, functions, index, line, ret, scope, _len, _len2;
     functions = [];
     scope = {};
     txt = txt.split("\n");
@@ -44,10 +44,16 @@
     end_stack = [];
     for (index = 0, _len = txt.length; index < _len; index++) {
       line = txt[index];
-      if ((_ref = line[0]) === "if" || _ref === "def" || _ref === "begin") {
+      end_pos = line.indexOf(" ");
+      if (end_pos === -1) {
+        end_pos = line.length;
+      }
+      first_word = k.s(line, 0, end_pos);
+      console.log(first_word);
+      if (first_word === "if" || first_word === "def" || first_word === "begin" || first_word === "else") {
         end_stack.push(index);
       }
-      if (line[0] === "end") {
+      if (first_word === "end" || first_word === "elseif" || first_word === "else") {
         end_val = end_stack.pop();
         end_info[end_val] = index;
       }
@@ -91,6 +97,13 @@
             varValue: line[1]
           });
         } else if (line[0] === "if") {
+          code += interpolate("if (!{{condition}}) {\n  scope.set_pc = " + end_info[index] + "\n  scope.follow_else = true\n} else {\n  scope.follow_else = false\n}\n", {
+            condition: line[1]
+          });
+        } else if (line[0] === "elseif" || line[0] === "else" && line[1] === "if") {
+          condition = k.s(line, -1)[0];
+          code += "if (scope.follow_else) {\n  if \n}";
+        } else if (line[0] === "end") {} else if (line[0] === "ifgoto") {
           code += interpolate("if ({{condition}}) {\n  scope.pc = {{goto}}\n}", {
             condition: line[1],
             goto: line[2]
@@ -134,7 +147,7 @@
       code += "}";
       functions.push(code);
     }
-    compiled = "scope = " + (JSON.stringify(scope)) + "\nfunctions = [" + (functions.join(",\n")) + "]\nscope.pc = 0\nscope.last_pc = 0\nscope.second_last_pc = 0\nfor (var j=0; j<100; j++) {\n  if (scope.pc >= functions.length || scope.__close__ == true) {\n    break;  \n  }\n  console.log(\"Executing: \" + scope.lines[scope.pc])\n  functions[scope.pc](scope);\n  scope.not = ! scope.so\n  scope.second_last_pc = scope.last_pc\n  scope.last_pc = scope.pc\n  if (scope.set_pc != -1) {\n    scope.pc = scope.set_pc\n    scope.set_pc = -1\n  }\n  scope.pc ++\n}";
+    compiled = "scope = " + (JSON.stringify(scope)) + "\nfunctions = [" + (functions.join(",\n")) + "]\nscope.pc = 0\nscope.last_pc = 0\nscope.second_last_pc = 0\nfor (var j=0; j<100; j++) {\n  if (scope.pc >= functions.length || scope.__close__ == true) {\n    break;  \n  }\n  //console.log(\"Executing: \" + scope.lines[scope.pc])\n  functions[scope.pc](scope);\n  scope.not = ! scope.so\n  scope.second_last_pc = scope.last_pc\n  scope.last_pc = scope.pc\n  if (scope.set_pc != -1) {\n    scope.pc = scope.set_pc\n    scope.set_pc = -1\n  }\n  scope.pc ++\n}";
     return compiled;
   };
 }).call(this);

@@ -36,12 +36,17 @@ parse = window.parse = (txt) ->
 
   #first pass
   for line, index in txt
-    first_word = k.s line, 0, line.indexOf(" "))
-    if first_word in ["if", "def", "begin"]
+    end_pos = line.indexOf(" ")
+    if end_pos is -1 then end_pos = line.length
+    first_word = k.s line, 0, end_pos
+    console.log first_word
+    if first_word in ["if", "def", "begin", "else"]
       end_stack.push index
-    if first_word is "end"
+    if first_word in ["end", "elseif", "else"]
       end_val = end_stack.pop()
       end_info[end_val] = index
+
+      
 
   for line, index in txt
     line = k.trimLeft line
@@ -73,6 +78,25 @@ parse = window.parse = (txt) ->
       else if line[0] is "goto"
         code += interpolate "scope.set_pc = {{varValue}}", varValue: line[1]
       else if line[0] is "if"
+        code += interpolate """
+          if (!{{condition}}) {
+            scope.set_pc = #{end_info[index]}
+            scope.follow_else = true
+          } else {
+            scope.follow_else = false
+          }
+
+        """, condition: line[1]
+      else if line[0] is "elseif" or line[0] is "else" and line[1] is "if"
+        condition = k.s(line, -1)[0]
+        code += """
+          if (scope.follow_else) {
+            if 
+          }
+        """
+      else if line[0] is "end"
+        #pass
+      else if line[0] is "ifgoto"
         code += interpolate """
           if ({{condition}}) {
             scope.pc = {{goto}}
@@ -118,7 +142,7 @@ parse = window.parse = (txt) ->
       if (scope.pc >= functions.length || scope.__close__ == true) {
         break;  
       }
-      console.log("Executing: " + scope.lines[scope.pc])
+      //console.log("Executing: " + scope.lines[scope.pc])
       functions[scope.pc](scope);
       scope.not = ! scope.so
       scope.second_last_pc = scope.last_pc
