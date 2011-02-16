@@ -39,24 +39,23 @@ parse = window.parse = (txt) ->
     end_pos = line.indexOf(" ")
     if end_pos is -1 then end_pos = line.length
     first_word = k.s line, 0, end_pos
-    console.log first_word
-    if first_word in ["if", "def", "begin", "else"]
+    if first_word in ["if", "def", "begin"]
       end_stack.push index
-    if first_word in ["end", "elseif", "else"]
+    if first_word in ["end"]
       end_val = end_stack.pop()
       end_info[end_val] = index
-
+    if first_word in ["else", "elseif"] #these act as both
+      end_val = end_stack.pop()
+      end_info[end_val] = index
+      end_stack.push index
       
 
   for line, index in txt
     line = k.trimLeft line
     code = ""
-    code += "function(scope) {"
+    code += "/* #{index} */function(scope) {"
     if k.startsWith(line, "string") || k.startsWith(line, '"')
       code += "scope.so = \"" + k.s(line, line.indexOf(" ") + 1) + '"'
-      console.log line
-      console.log k.s line, (line.indexOf(" ") + 1)
-      console.log line.indexOf(" ")
     else if k.startsWith line, "str"
       code += interpolate "{{varName}} = \"#{k.s(line, line.indexOf(' ', 4)+1)}\"", 
         varName: k.s(line, 4, line.indexOf(" ", 4)-4)
@@ -88,10 +87,25 @@ parse = window.parse = (txt) ->
 
         """, condition: line[1]
       else if line[0] is "elseif" or line[0] is "else" and line[1] is "if"
+        
+
+
         condition = k.s(line, -1)[0]
-        code += """
+
+        code += interpolate """
           if (scope.follow_else) {
-            if 
+            if (!{{condition}}) {
+              scope.set_pc = #{end_info[index]}
+              scope.follow_else = true
+            } else {
+              scope.follow_else = false
+            }
+          }
+        """, condition: condition
+      else if line[0] is "else"
+        code += """
+          if (!scope.follow_else) {
+            scope.set_pc = #{end_info[index]}
           }
         """
       else if line[0] is "end"
@@ -99,11 +113,10 @@ parse = window.parse = (txt) ->
       else if line[0] is "ifgoto"
         code += interpolate """
           if ({{condition}}) {
-            scope.pc = {{goto}}
+            scope.set_pc = {{goto}}
           }
         """, condition: line[1], goto: line[2] 
       else if line[0] is "label"
-        console.log "we have a label"
         scope[line[1]] = index #presetting the scope
         code += "//Label #{line[1]}\n"
       else if line[0] == "exit"

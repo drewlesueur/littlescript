@@ -49,25 +49,26 @@
         end_pos = line.length;
       }
       first_word = k.s(line, 0, end_pos);
-      console.log(first_word);
-      if (first_word === "if" || first_word === "def" || first_word === "begin" || first_word === "else") {
+      if (first_word === "if" || first_word === "def" || first_word === "begin") {
         end_stack.push(index);
       }
-      if (first_word === "end" || first_word === "elseif" || first_word === "else") {
+      if (first_word === "end") {
         end_val = end_stack.pop();
         end_info[end_val] = index;
+      }
+      if (first_word === "else" || first_word === "elseif") {
+        end_val = end_stack.pop();
+        end_info[end_val] = index;
+        end_stack.push(index);
       }
     }
     for (index = 0, _len2 = txt.length; index < _len2; index++) {
       line = txt[index];
       line = k.trimLeft(line);
       code = "";
-      code += "function(scope) {";
+      code += "/* " + index + " */function(scope) {";
       if (k.startsWith(line, "string") || k.startsWith(line, '"')) {
         code += "scope.so = \"" + k.s(line, line.indexOf(" ") + 1) + '"';
-        console.log(line);
-        console.log(k.s(line, line.indexOf(" ") + 1));
-        console.log(line.indexOf(" "));
       } else if (k.startsWith(line, "str")) {
         code += interpolate("{{varName}} = \"" + (k.s(line, line.indexOf(' ', 4) + 1)) + "\"", {
           varName: k.s(line, 4, line.indexOf(" ", 4) - 4)
@@ -102,14 +103,17 @@
           });
         } else if (line[0] === "elseif" || line[0] === "else" && line[1] === "if") {
           condition = k.s(line, -1)[0];
-          code += "if (scope.follow_else) {\n  if \n}";
+          code += interpolate("if (scope.follow_else) {\n  if (!{{condition}}) {\n    scope.set_pc = " + end_info[index] + "\n    scope.follow_else = true\n  } else {\n    scope.follow_else = false\n  }\n}", {
+            condition: condition
+          });
+        } else if (line[0] === "else") {
+          code += "if (!scope.follow_else) {\n  scope.set_pc = " + end_info[index] + "\n}";
         } else if (line[0] === "end") {} else if (line[0] === "ifgoto") {
-          code += interpolate("if ({{condition}}) {\n  scope.pc = {{goto}}\n}", {
+          code += interpolate("if ({{condition}}) {\n  scope.set_pc = {{goto}}\n}", {
             condition: line[1],
             goto: line[2]
           });
         } else if (line[0] === "label") {
-          console.log("we have a label");
           scope[line[1]] = index;
           code += "//Label " + line[1] + "\n";
         } else if (line[0] === "exit") {

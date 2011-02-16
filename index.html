@@ -16,7 +16,7 @@
     $('#btn_run').click () ->
       code = $('#code').val()
       js = parse code
-      console.log js
+      $('#compiled').val js
       eval js
 </script>
 </head>
@@ -33,6 +33,7 @@ string made by drew
 set drew so
 ` console.log(scope.drew)
 </textarea>
+<textarea id="compiled" rows="100" cols="100"></textarea>
 
 </body>
 </html>
