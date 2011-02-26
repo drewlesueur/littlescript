@@ -9,6 +9,8 @@ makeVars = (vars) ->
       vars[name] = "{}"
     else if value in ["array", "[]"]
       vars[name] = "[]"
+    else if k.startsWith(value, '"') or k.startsWith(value, "'")
+      vars[name] = value
     else
       if not k.startsWith(value, ".")
         value = "." + value
@@ -23,6 +25,7 @@ interpolate = (str, rawVars) ->
   _.template str, makeVars rawVars
 
 parse = window.parse = (txt) ->
+  debug = true
   functions = []
   scope = {}
   txt = txt.split "\n"
@@ -30,7 +33,7 @@ parse = window.parse = (txt) ->
   scope.split_lines = []
   scope.set_pc = -1
   scope.stack = []
-
+  scope.argsStack = []
   end_info = {} 
   end_stack = []
 
@@ -87,11 +90,7 @@ parse = window.parse = (txt) ->
 
         """, condition: line[1]
       else if line[0] is "elseif" or line[0] is "else" and line[1] is "if"
-        
-
-
         condition = k.s(line, -1)[0]
-
         code += interpolate """
           if (scope.follow_else) {
             if (!{{condition}}) {
@@ -116,6 +115,11 @@ parse = window.parse = (txt) ->
             scope.set_pc = {{goto}}
           }
         """, condition: line[1], goto: line[2] 
+      else if line[0] is "def"
+        scope[line[1]] = index
+        code += """
+          scope.set_pc = #{end_info[index]}
+        """
       else if line[0] is "label"
         scope[line[1]] = index #presetting the scope
         code += "//Label #{line[1]}\n"
@@ -135,10 +139,12 @@ parse = window.parse = (txt) ->
       else if line[0] == "return"
         ret = makeVars k.s line, 1
         code += "scope.ret = [" + ret.join(", ") + "]\n"
-        code += "scope.set_pc = scope.stack.pop()"
+        code += "scope.args = scope.argsStack.pop()\n;"
+        code += "scope.set_pc = scope.stack.pop();\n"
       else if line[0] != ""
         #code += "scope.set_pc = scope.call" tried to implement this in littlescipt
         args = makeVars k.s line, 1
+        code += "scope.argsStack.push(scope.args)\n"
         code += "scope.args = [" + args.join(", ") + "]\n"
         code += "scope.stack.push(scope.pc)\n"
         code += interpolate "scope.set_pc = {{varValue}}\n", varValue: line[0]
@@ -152,6 +158,7 @@ parse = window.parse = (txt) ->
     scope.last_pc = 0
     scope.second_last_pc = 0
     for (var j=0; j<100; j++) {
+      console.log("Executing line" + scope.pc + ": " + scope.lines[scope.pc])
       if (scope.pc >= functions.length || scope.__close__ == true) {
         break;  
       }

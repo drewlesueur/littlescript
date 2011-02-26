@@ -13,6 +13,8 @@
         vars[name] = "{}";
       } else if (value === "array" || value === "[]") {
         vars[name] = "[]";
+      } else if (k.startsWith(value, '"') || k.startsWith(value, "'")) {
+        vars[name] = value;
       } else {
         if (!k.startsWith(value, ".")) {
           value = "." + value;
@@ -32,7 +34,8 @@
     return _.template(str, makeVars(rawVars));
   };
   parse = window.parse = function(txt) {
-    var args, code, compiled, condition, end_info, end_pos, end_stack, end_val, first_word, functions, index, line, ret, scope, _len, _len2;
+    var args, code, compiled, condition, debug, end_info, end_pos, end_stack, end_val, first_word, functions, index, line, ret, scope, _len, _len2;
+    debug = true;
     functions = [];
     scope = {};
     txt = txt.split("\n");
@@ -40,6 +43,7 @@
     scope.split_lines = [];
     scope.set_pc = -1;
     scope.stack = [];
+    scope.argsStack = [];
     end_info = {};
     end_stack = [];
     for (index = 0, _len = txt.length; index < _len; index++) {
@@ -113,6 +117,9 @@
             condition: line[1],
             goto: line[2]
           });
+        } else if (line[0] === "def") {
+          scope[line[1]] = index;
+          code += "scope.set_pc = " + end_info[index];
         } else if (line[0] === "label") {
           scope[line[1]] = index;
           code += "//Label " + line[1] + "\n";
@@ -138,9 +145,11 @@
         } else if (line[0] === "return") {
           ret = makeVars(k.s(line, 1));
           code += "scope.ret = [" + ret.join(", ") + "]\n";
-          code += "scope.set_pc = scope.stack.pop()";
+          code += "scope.args = scope.argsStack.pop()\n;";
+          code += "scope.set_pc = scope.stack.pop();\n";
         } else if (line[0] !== "") {
           args = makeVars(k.s(line, 1));
+          code += "scope.argsStack.push(scope.args)\n";
           code += "scope.args = [" + args.join(", ") + "]\n";
           code += "scope.stack.push(scope.pc)\n";
           code += interpolate("scope.set_pc = {{varValue}}\n", {
@@ -151,7 +160,7 @@
       code += "}";
       functions.push(code);
     }
-    compiled = "scope = " + (JSON.stringify(scope)) + "\nfunctions = [" + (functions.join(",\n")) + "]\nscope.pc = 0\nscope.last_pc = 0\nscope.second_last_pc = 0\nfor (var j=0; j<100; j++) {\n  if (scope.pc >= functions.length || scope.__close__ == true) {\n    break;  \n  }\n  //console.log(\"Executing: \" + scope.lines[scope.pc])\n  functions[scope.pc](scope);\n  scope.not = ! scope.so\n  scope.second_last_pc = scope.last_pc\n  scope.last_pc = scope.pc\n  if (scope.set_pc != -1) {\n    scope.pc = scope.set_pc\n    scope.set_pc = -1\n  }\n  scope.pc ++\n}";
+    compiled = "scope = " + (JSON.stringify(scope)) + "\nfunctions = [" + (functions.join(",\n")) + "]\nscope.pc = 0\nscope.last_pc = 0\nscope.second_last_pc = 0\nfor (var j=0; j<100; j++) {\n  console.log(\"Executing line\" + scope.pc + \": \" + scope.lines[scope.pc])\n  if (scope.pc >= functions.length || scope.__close__ == true) {\n    break;  \n  }\n  //console.log(\"Executing: \" + scope.lines[scope.pc])\n  functions[scope.pc](scope);\n  scope.not = ! scope.so\n  scope.second_last_pc = scope.last_pc\n  scope.last_pc = scope.pc\n  if (scope.set_pc != -1) {\n    scope.pc = scope.set_pc\n    scope.set_pc = -1\n  }\n  scope.pc ++\n}";
     return compiled;
   };
 }).call(this);
