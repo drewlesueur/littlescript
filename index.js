@@ -1,7 +1,25 @@
 (function() {
-  var interpolate, makeVars, parse;
+  var interpolate, makeVars, parse, updateCodeForFunctionCall;
   _.templateSettings = {
     interpolate: /\{\{(.+?)\}\}/g
+  };
+  updateCodeForFunctionCall = function(scope, line) {
+    var argNameIndex, args, code, name, _len, _ref;
+    code = "";
+    args = makeVars(k.s(line, 1));
+    code += "scope.argsStack.push(scope.args)\n";
+    code += "scope.args = [" + args.join(", ") + "]\n";
+    code += "scope.stack.push(scope.pc)\n";
+    _ref = scope.argNames[scope[line[0]]];
+    for (argNameIndex = 0, _len = _ref.length; argNameIndex < _len; argNameIndex++) {
+      name = _ref[argNameIndex];
+      code += interpolate("scope." + name + " = {{varValue}};\n", {
+        varValue: line[argNameIndex + 1]
+      });
+    }
+    return code += interpolate("scope.set_pc = {{varValue}}\n", {
+      varValue: line[0]
+    });
   };
   makeVars = function(vars) {
     var name, value;
@@ -34,7 +52,7 @@
     return _.template(str, makeVars(rawVars));
   };
   parse = window.parse = function(txt) {
-    var args, code, compiled, condition, debug, end_info, end_pos, end_stack, end_val, first_word, functions, index, line, ret, scope, _len, _len2;
+    var code, compiled, condition, debug, end_info, end_pos, end_stack, end_val, first_word, functions, index, line, ret, scope, _len, _len2;
     debug = true;
     functions = [];
     scope = {};
@@ -44,6 +62,7 @@
     scope.set_pc = -1;
     scope.stack = [];
     scope.argsStack = [];
+    scope.argNames = {};
     end_info = {};
     end_stack = [];
     for (index = 0, _len = txt.length; index < _len; index++) {
@@ -55,6 +74,14 @@
       first_word = k.s(line, 0, end_pos);
       if (first_word === "if" || first_word === "def" || first_word === "begin") {
         end_stack.push(index);
+        if (first_word === "def") {
+          line = k.trimLeft(line);
+          line = k.trimRight(line);
+          line = line.replace(/\s+/, " ");
+          line = line.split(" ");
+          scope[line[1]] = index;
+          scope.argNames[index] = k.s(line, 2);
+        }
       }
       if (first_word === "end") {
         end_val = end_stack.pop();
@@ -93,10 +120,14 @@
             varValue: line[2]
           });
         } else if (line[1] === "=") {
-          code += interpolate("{{varName}} = {{varValue}}", {
-            varName: line[0],
-            varValue: line[2]
-          });
+          if (line.length === 3) {
+            code += interpolate("{{varName}} = {{varValue}}", {
+              varName: line[0],
+              varValue: line[2]
+            });
+          } else {
+
+          }
         } else if (line[0] === "goto") {
           code += interpolate("scope.set_pc = {{varValue}}", {
             varValue: line[1]
@@ -118,7 +149,6 @@
             goto: line[2]
           });
         } else if (line[0] === "def") {
-          scope[line[1]] = index;
           code += "scope.set_pc = " + end_info[index];
         } else if (line[0] === "label") {
           scope[line[1]] = index;
@@ -148,13 +178,7 @@
           code += "scope.args = scope.argsStack.pop()\n;";
           code += "scope.set_pc = scope.stack.pop();\n";
         } else if (line[0] !== "") {
-          args = makeVars(k.s(line, 1));
-          code += "scope.argsStack.push(scope.args)\n";
-          code += "scope.args = [" + args.join(", ") + "]\n";
-          code += "scope.stack.push(scope.pc)\n";
-          code += interpolate("scope.set_pc = {{varValue}}\n", {
-            varValue: line[0]
-          });
+          code += updateCodeForFunctionCall(scope, line);
         }
       }
       code += "}";
