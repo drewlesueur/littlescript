@@ -33,10 +33,10 @@ A programming language to code on a mobile phone.
     # similar to person[prop] = "5'8"
 
     awards = []
-    awards.0 = " my first award
+    awards.0 = "my first award"
     awards.1 = []
-    awards.1.0 = " second award a
-    awards.1.1 = " scond award b
+    awards.1.0 = "second award a"
+    awards.1.1 = "scond award b"
 
 #if
     x = 1
