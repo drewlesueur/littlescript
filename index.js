@@ -33,6 +33,8 @@
         vars[name] = "[]";
       } else if (k.startsWith(value, '"') || k.startsWith(value, "'")) {
         vars[name] = value;
+      } else if (value.match(/^[^A-Za-z0-9\.]/)) {
+        vars[name] = '"' + value + '"';
       } else {
         if (!k.startsWith(value, ".")) {
           value = "." + value;
@@ -52,8 +54,7 @@
     return _.template(str, makeVars(rawVars));
   };
   parse = window.parse = function(txt) {
-    var code, compiled, condition, debug, end_info, end_pos, end_stack, end_val, first_word, functions, index, line, ret, scope, _len, _len2;
-    debug = true;
+    var code, compiled, condition, end_info, end_pos, end_pos_2, end_stack, end_val, first_word, functions, index, line, liner, new_lines, ret, scope, second_word, _len, _len2;
     functions = [];
     scope = {};
     txt = txt.split("\n");
@@ -65,34 +66,52 @@
     scope.argNames = {};
     end_info = {};
     end_stack = [];
+    new_lines = [];
     for (index = 0, _len = txt.length; index < _len; index++) {
-      line = txt[index];
-      end_pos = line.indexOf(" ");
+      liner = txt[index];
+      end_pos = liner.indexOf(" ");
       if (end_pos === -1) {
-        end_pos = line.length;
+        end_pos = liner.length;
       }
-      first_word = k.s(line, 0, end_pos);
+      first_word = k.s(liner, 0, end_pos);
+      end_pos_2 = liner.indexOf(" ", end_pos + 1);
+      second_word = k.s(liner, end_pos + 1, end_pos_2 - end_pos);
       if (first_word === "if" || first_word === "def" || first_word === "begin") {
         end_stack.push(index);
-        if (first_word === "def") {
-          line = k.trimLeft(line);
-          line = k.trimRight(line);
-          line = line.replace(/\s+/, " ");
-          line = line.split(" ");
-          scope[line[1]] = index;
-          scope.argNames[index] = k.s(line, 2);
-        }
       }
       if (first_word === "end") {
         end_val = end_stack.pop();
         end_info[end_val] = index;
+        if (scope.inDef === true) {
+          liner = "return so";
+          txt[index] = liner;
+          scope.inDef = false;
+        }
       }
       if (first_word === "else" || first_word === "elseif") {
         end_val = end_stack.pop();
         end_info[end_val] = index;
         end_stack.push(index);
       }
+      if (!(k(liner).startsWith("string") || k(liner).startsWith('"') || k(liner).startsWith('`') || k(liner).startsWith('str'))) {
+        line = k.trimLeft(liner);
+        line = k.trimRight(line);
+        line = line.replace(/\s+/, " ");
+        line = line.split(" ");
+        if (line[0] === "def") {
+          scope[line[1]] = index;
+          scope.argNames[index] = k.s(line, 2);
+          scope.inDef = true;
+        }
+      }
+      if (second_word === "=") {
+        new_lines.push(k(liner).s(end_pos_2 + 2));
+        new_lines.push(k(liner).s(0, end_pos_2) + " so");
+      } else {
+        new_lines.push(liner);
+      }
     }
+    txt = new_lines;
     for (index = 0, _len2 = txt.length; index < _len2; index++) {
       line = txt[index];
       line = k.trimLeft(line);
@@ -173,12 +192,16 @@
             val2: line[2]
           });
         } else if (line[0] === "return") {
-          ret = makeVars(k.s(line, 1));
-          code += "scope.ret = [" + ret.join(", ") + "]\n";
+          ret = makeVars(k.s(line, 1, 1));
+          code += "scope.so = " + ret[0] + ";\n";
           code += "scope.args = scope.argsStack.pop()\n;";
           code += "scope.set_pc = scope.stack.pop();\n";
-        } else if (line[0] !== "") {
+        } else if (line[0] !== "" && line.length > 1) {
           code += updateCodeForFunctionCall(scope, line);
+        } else if (line[0] !== "" && line.length === 1) {
+          code += interpolate("scope.so = {{varValue}}", {
+            varValue: line[0]
+          });
         }
       }
       code += "}";

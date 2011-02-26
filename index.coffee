@@ -21,6 +21,8 @@ makeVars = (vars) ->
       vars[name] = "[]"
     else if k.startsWith(value, '"') or k.startsWith(value, "'")
       vars[name] = value
+    else if value.match(/^[^A-Za-z0-9\.]/)
+      vars[name] = '"'+value+'"'
     else
       if not k.startsWith(value, ".")
         value = "." + value
@@ -35,7 +37,6 @@ interpolate = (str, rawVars) ->
   _.template str, makeVars rawVars
 
 parse = window.parse = (txt) ->
-  debug = true
   functions = []
   scope = {}
   txt = txt.split "\n"
@@ -49,27 +50,44 @@ parse = window.parse = (txt) ->
   end_stack = []
 
   #first pass
-  for line, index in txt
-    end_pos = line.indexOf(" ")
-    if end_pos is -1 then end_pos = line.length
-    first_word = k.s line, 0, end_pos
+  new_lines = []
+  for liner, index in txt
+    end_pos = liner.indexOf(" ")
+    if end_pos is -1 then end_pos = liner.length
+    first_word = k.s liner, 0, end_pos
+    end_pos_2 = liner.indexOf(" ", end_pos + 1)
+    second_word = k.s liner, end_pos+1, end_pos_2 - end_pos
+    
     if first_word in ["if", "def", "begin"]
       end_stack.push index
-      if first_word is "def"
-        line = k.trimLeft line
-        line = k.trimRight line
-        line = line.replace /\s+/, " "
-        line = line.split " "
-        scope[line[1]] = index
-        scope.argNames[index] = k.s(line, 2)
     if first_word in ["end"]
       end_val = end_stack.pop()
       end_info[end_val] = index
+      if scope.inDef == true
+        liner = "return so"
+        txt[index] = liner
+        scope.inDef = false
     if first_word in ["else", "elseif"] #these act as both
       end_val = end_stack.pop()
       end_info[end_val] = index
       end_stack.push index
-      
+    if not (k(liner).startsWith("string") or k(liner).startsWith('"') or k(liner).startsWith('`') or k(liner).startsWith('str'))
+      line = k.trimLeft liner
+      line = k.trimRight line
+      line = line.replace /\s+/, " "
+      line = line.split " "
+      if line[0] == "def"
+        scope[line[1]] = index
+        scope.argNames[index] = k.s(line, 2)
+        scope.inDef = true
+
+    if second_word == "="
+      new_lines.push k(liner).s(end_pos_2 + 2)
+      new_lines.push k(liner).s(0, end_pos_2) + " so"
+    else 
+      new_lines.push liner
+
+  txt = new_lines
 
   for line, index in txt
     line = k.trimLeft line
@@ -97,6 +115,9 @@ parse = window.parse = (txt) ->
         if line.length == 3
           code += interpolate "{{varName}} = {{varValue}}", varName: line[0], varValue: line[2] 
         else
+          # this doesn't work like I thought it might
+          #code += updateCodeForFunctionCall(scope, k.s(line, 2))
+          #code += interpolate "{{varName}} = scope.so", varName: line[0]
 
       else if line[0] is "goto"
         code += interpolate "scope.set_pc = {{varValue}}", varValue: line[1]
@@ -157,13 +178,15 @@ parse = window.parse = (txt) ->
           val1: line[0]
           val2: line[2]
       else if line[0] == "return"
-        ret = makeVars k.s line, 1
-        code += "scope.ret = [" + ret.join(", ") + "]\n"
+        ret = makeVars k.s(line, 1, 1)
+        code += "scope.so = " + ret[0] + ";\n"
         code += "scope.args = scope.argsStack.pop()\n;"
         code += "scope.set_pc = scope.stack.pop();\n"
-      else if line[0] != ""
+      else if line[0] != "" and line.length > 1
         #code += "scope.set_pc = scope.call" tried to implement this in littlescipt
         code += updateCodeForFunctionCall(scope, line)
+      else if line[0] != "" and line.length == 1
+        code += interpolate "scope.so = {{varValue}}", varValue: line[0] 
     code += "}"
     functions.push(code)
  
