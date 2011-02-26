@@ -41,7 +41,7 @@
           varso = makeVars(varso);
           return '" +' + varso['name'] + '+ "';
         });
-      } else if (value.match(/^[^A-Za-z0-9\.\"]/)) {
+      } else if (value.match(/^[^A-Za-z0-9\.\"\$\_]/)) {
         vars[name] = '"' + value + '"';
       } else {
         if (!k.startsWith(value, ".")) {
