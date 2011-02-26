@@ -88,22 +88,22 @@ Use the `scope` variable
 #goto, label, ifgoto, and exit
 If you want to instead of functions
 
-  x = 1
-  ifgoto x xgood
-  goto xnotgood
+    x = 1
+    ifgoto x xgood
+    goto xnotgood
 
-  label xgood
-  log "x_is_truthy"
-  goto quit
+    label xgood
+    log "x_is_truthy"
+    goto quit
 
-  lable xnotgood
-  log "x_is_falsy"
-  goto quit
+    lable xnotgood
+    log "x_is_falsy"
+    goto quit
 
 
-  label quit
-  exit
-  #exit exits the program
+    label quit
+    exit
+    #exit exits the program
 
 
 #Comments
