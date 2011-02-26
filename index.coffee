@@ -26,8 +26,6 @@ makeVars = (vars) ->
         varso = makeVars varso
         return '" +' + varso['name'] + '+ "'
     else if value.match(/^[^A-Za-z0-9\.\"]/)
-
-      console.log "what!!"
       vars[name] = '"'+value+'"'
     else
       if not k.startsWith(value, ".")
@@ -45,10 +43,7 @@ interpolate = (str, rawVars) ->
 parse = window.parse = (txt) ->
   txt = txt.replace /\\"/g, '\\x22'
   txt = txt.replace /(\"[^\"]*[^\\]\")/g, (a, b) ->
-    console.log a
-    console.log b
     return a.replace(/\n/g, '\\x0A').replace(/\n/g, '\\x0D').replace(/\x20/g, '\\x20')
-  console.log txt
 
   functions = []
   scope = {}
@@ -85,7 +80,6 @@ parse = window.parse = (txt) ->
       start_word = start_stack.pop()
       if start_word == "def"
         liner = "return so"
-      console.log end_info
     if first_word in ["else", "elseif"] #these act as both
       end_val = end_stack.pop()
       end_info[end_val] = index
@@ -219,12 +213,10 @@ parse = window.parse = (txt) ->
     scope.pc = 0
     scope.last_pc = 0
     scope.second_last_pc = 0
-    for (var j=0; j<100; j++) {
-      //console.log("Executing line" + scope.pc + ": " + scope.lines[scope.pc])
+    for (var j=0; j<10000; j++) {
       if (scope.pc >= functions.length || scope.__close__ == true) {
         break;  
       }
-      //console.log("Executing: " + scope.lines[scope.pc])
       functions[scope.pc](scope);
       scope.not = ! scope.so
       scope.second_last_pc = scope.last_pc

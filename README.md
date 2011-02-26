@@ -104,7 +104,7 @@ If you want to instead of functions
     log "x_is_truthy"
     goto quit
 
-    lable xnotgood
+    label xnotgood
     log "x_is_falsy"
     goto quit
 
