@@ -1,6 +1,17 @@
 <!doctype html>
 <html>
 <head>
+  <link href='http://fonts.googleapis.com/css?family=Kreon' rel='stylesheet' type='text/css'>
+<style>
+  h1 {
+    font-family: 'Kreon', 'courier new';
+    font-weight: normal;
+    font-size: 50pt;
+  }
+  body {
+    font-family: arial;
+  }
+</style>
 <script src="http://inc.the.tl/underscore.js"></script>
 <script src="http://inc.the.tl/k/index.js"></script>
 <script src="http://inc.the.tl/coffeescript.js"></script>
@@ -21,17 +32,45 @@
 </script>
 </head>
 <body>
+  <h1>LittleScript</h1>
+  <p>
+    LittleScript is an experimental language that compiles to javascript
+    <br />
+    <a href="http://github.com/drewlesueur/littlescript">Source and Documentation</a>
+  </p>
+
   <input id="btn_run" type="button" value="Run">
 <br>
 <textarea rows="100" cols="60" id="code">
-string hello world
-set x
-` alert(scope.x)
+log string hello world
 
 
-string made by drew
-set drew so
-` console.log(scope.drew)
+def url_encode numbers
+ ` scope.so = encodeURIComponent(scope.args[0])
+end
+
+url = string http://some stuff to encode
+encoded = url_encode url
+log string the encoded url is ...
+log encoded
+
+info = {}
+info.url = url
+prop1 = string operating_system
+info..prop1 = string the browser
+log info
+
+x = 1
+if x is 1
+  log string yes, x is 1
+else
+  log string no, x isn't 1
+end
+
+
+
+
+
 </textarea>
 <textarea id="compiled" rows="100" cols="60"></textarea>
 

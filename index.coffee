@@ -22,8 +22,9 @@ makeVars = (vars) ->
     else if k.startsWith(value, '"') or k.startsWith(value, "'")
       vars[name] = value
     else if value.match(/^[^A-Za-z0-9\.\"]/)
+
       console.log "what!!"
-      vars[name] = '"'+value+'"'
+      #vars[name] = '"'+value+'"'
     else
       if not k.startsWith(value, ".")
         value = "." + value
@@ -38,6 +39,10 @@ interpolate = (str, rawVars) ->
   _.template str, makeVars rawVars
 
 parse = window.parse = (txt) ->
+  txt = txt.replace /(\"[^\\][\s\S]*[^\\]\")/g, (a) ->
+    return a.replace(/\n/g, '\\x0A').replace(/\n/g, '\\x0D').replace(/\x20/g, '\\x20')
+  console.log txt
+
   functions = []
   scope = {}
   txt = txt.split "\n"
@@ -79,7 +84,7 @@ parse = window.parse = (txt) ->
       end_info[end_val] = index
       end_stack.push index
 
-    if not (k(liner).startsWith("string") or k(liner).startsWith('"') or k(liner).startsWith('`'))
+    if not (k(liner).startsWith("string") or k(liner).startsWith('`'))
       line = k.trimLeft liner
       line = k.trimRight line
       line = line.replace /\s+/, " "
@@ -107,7 +112,7 @@ parse = window.parse = (txt) ->
     line = k.trimLeft line
     code = ""
     code += "/* #{index} */function(scope) {"
-    if k.startsWith(line, "string") || k.startsWith(line, '"')
+    if k.startsWith(line, "string")
       code += "scope.so = \"" + k.s(line, line.indexOf(" ") + 1) + '"'
     else if k.startsWith line, "`"
       code += "scope.so = " +  k.s(line, line.indexOf(" ") + 1)
@@ -208,7 +213,7 @@ parse = window.parse = (txt) ->
     scope.last_pc = 0
     scope.second_last_pc = 0
     for (var j=0; j<100; j++) {
-      console.log("Executing line" + scope.pc + ": " + scope.lines[scope.pc])
+      //console.log("Executing line" + scope.pc + ": " + scope.lines[scope.pc])
       if (scope.pc >= functions.length || scope.__close__ == true) {
         break;  
       }

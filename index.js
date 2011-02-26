@@ -35,7 +35,6 @@
         vars[name] = value;
       } else if (value.match(/^[^A-Za-z0-9\.\"]/)) {
         console.log("what!!");
-        vars[name] = '"' + value + '"';
       } else {
         if (!k.startsWith(value, ".")) {
           value = "." + value;
@@ -56,6 +55,10 @@
   };
   parse = window.parse = function(txt) {
     var code, compiled, condition, end_info, end_pos, end_pos_2, end_stack, end_val, first_word, functions, index, line, liner, new_lines, ret, scope, second_word, start_stack, start_word, _i, _len, _len2;
+    txt = txt.replace(/(\"[^\\][\s\S]*[^\\]\")/g, function(a) {
+      return a.replace(/\n/g, '\\x0A').replace(/\n/g, '\\x0D').replace(/\x20/g, '\\x20');
+    });
+    console.log(txt);
     functions = [];
     scope = {};
     txt = txt.split("\n");
@@ -100,7 +103,7 @@
         end_info[end_val] = index;
         end_stack.push(index);
       }
-      if (!(k(liner).startsWith("string") || k(liner).startsWith('"') || k(liner).startsWith('`'))) {
+      if (!(k(liner).startsWith("string") || k(liner).startsWith('`'))) {
         line = k.trimLeft(liner);
         line = k.trimRight(line);
         line = line.replace(/\s+/, " ");
@@ -130,7 +133,7 @@
       line = k.trimLeft(line);
       code = "";
       code += "/* " + index + " */function(scope) {";
-      if (k.startsWith(line, "string") || k.startsWith(line, '"')) {
+      if (k.startsWith(line, "string")) {
         code += "scope.so = \"" + k.s(line, line.indexOf(" ") + 1) + '"';
       } else if (k.startsWith(line, "`")) {
         code += "scope.so = " + k.s(line, line.indexOf(" ") + 1);
@@ -216,7 +219,7 @@
       code += "}";
       functions.push(code);
     }
-    compiled = "scope = " + (JSON.stringify(scope)) + "\nfunctions = [" + (functions.join(",\n")) + "]\nscope.pc = 0\nscope.last_pc = 0\nscope.second_last_pc = 0\nfor (var j=0; j<100; j++) {\n  console.log(\"Executing line\" + scope.pc + \": \" + scope.lines[scope.pc])\n  if (scope.pc >= functions.length || scope.__close__ == true) {\n    break;  \n  }\n  //console.log(\"Executing: \" + scope.lines[scope.pc])\n  functions[scope.pc](scope);\n  scope.not = ! scope.so\n  scope.second_last_pc = scope.last_pc\n  scope.last_pc = scope.pc\n  if (scope.set_pc != -1) {\n    scope.pc = scope.set_pc\n    scope.set_pc = -1\n  }\n  scope.pc ++\n}";
+    compiled = "scope = " + (JSON.stringify(scope)) + "\nfunctions = [" + (functions.join(",\n")) + "]\nscope.pc = 0\nscope.last_pc = 0\nscope.second_last_pc = 0\nfor (var j=0; j<100; j++) {\n  //console.log(\"Executing line\" + scope.pc + \": \" + scope.lines[scope.pc])\n  if (scope.pc >= functions.length || scope.__close__ == true) {\n    break;  \n  }\n  //console.log(\"Executing: \" + scope.lines[scope.pc])\n  functions[scope.pc](scope);\n  scope.not = ! scope.so\n  scope.second_last_pc = scope.last_pc\n  scope.last_pc = scope.pc\n  if (scope.set_pc != -1) {\n    scope.pc = scope.set_pc\n    scope.set_pc = -1\n  }\n  scope.pc ++\n}";
     return compiled;
   };
 }).call(this);
