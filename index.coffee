@@ -47,31 +47,36 @@ parse = window.parse = (txt) ->
   scope.argNames = {}
   end_info = {} 
   end_stack = []
+  start_stack = []
 
-  #first pass
   new_lines = []
-  for liner, index in txt
+  index = 0
+  #first pass
+  for liner in txt
     end_pos = liner.indexOf(" ")
     if end_pos is -1 then end_pos = liner.length
     first_word = k.s liner, 0, end_pos
     end_pos_2 = liner.indexOf(" ", end_pos + 1)
     second_word = k.s liner, end_pos+1, end_pos_2 - end_pos-1
-    
-    console.log "Second word is #{second_word}."
-    console.log end_pos_2, end_pos
-    if first_word in ["if", "def", "begin"]
+
+    if first_word in ["if"]
+      end_stack.push index + 1
+      start_stack.push first_word
+    else if first_word in ["def", "begin"]
       end_stack.push index
+      start_stack.push first_word
     if first_word in ["end"]
       end_val = end_stack.pop()
       end_info[end_val] = index
-      if scope.inDef == true
+      start_word = start_stack.pop()
+      if start_word == "def"
         liner = "return so"
-        txt[index] = liner
-        scope.inDef = false
+      console.log end_info
     if first_word in ["else", "elseif"] #these act as both
       end_val = end_stack.pop()
       end_info[end_val] = index
       end_stack.push index
+
     if not (k(liner).startsWith("string") or k(liner).startsWith('"') or k(liner).startsWith('`') or k(liner).startsWith('str'))
       line = k.trimLeft liner
       line = k.trimRight line
@@ -80,13 +85,18 @@ parse = window.parse = (txt) ->
       if line[0] == "def"
         scope[line[1]] = index
         scope.argNames[index] = k.s(line, 2)
-        scope.inDef = true
 
     if second_word == "="
       new_lines.push k(liner).s(end_pos_2 + 1)
       new_lines.push k(liner).s(0, end_pos_2) + " so"
+      index += 2
+    else if first_word is "if"
+      new_lines.push k(liner).s(end_pos + 1)
+      new_lines.push k(liner).s(0, end_pos) + " so"
+      index += 2
     else 
       new_lines.push liner
+      index += 1
 
   txt = new_lines
   scope.lines = txt

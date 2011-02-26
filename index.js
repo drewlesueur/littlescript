@@ -54,7 +54,7 @@
     return _.template(str, makeVars(rawVars));
   };
   parse = window.parse = function(txt) {
-    var code, compiled, condition, end_info, end_pos, end_pos_2, end_stack, end_val, first_word, functions, index, line, liner, new_lines, ret, scope, second_word, _len, _len2;
+    var code, compiled, condition, end_info, end_pos, end_pos_2, end_stack, end_val, first_word, functions, index, line, liner, new_lines, ret, scope, second_word, start_stack, start_word, _i, _len, _len2;
     functions = [];
     scope = {};
     txt = txt.split("\n");
@@ -65,9 +65,11 @@
     scope.argNames = {};
     end_info = {};
     end_stack = [];
+    start_stack = [];
     new_lines = [];
-    for (index = 0, _len = txt.length; index < _len; index++) {
-      liner = txt[index];
+    index = 0;
+    for (_i = 0, _len = txt.length; _i < _len; _i++) {
+      liner = txt[_i];
       end_pos = liner.indexOf(" ");
       if (end_pos === -1) {
         end_pos = liner.length;
@@ -75,19 +77,21 @@
       first_word = k.s(liner, 0, end_pos);
       end_pos_2 = liner.indexOf(" ", end_pos + 1);
       second_word = k.s(liner, end_pos + 1, end_pos_2 - end_pos - 1);
-      console.log("Second word is " + second_word + ".");
-      console.log(end_pos_2, end_pos);
-      if (first_word === "if" || first_word === "def" || first_word === "begin") {
+      if (first_word === "if") {
+        end_stack.push(index + 1);
+        start_stack.push(first_word);
+      } else if (first_word === "def" || first_word === "begin") {
         end_stack.push(index);
+        start_stack.push(first_word);
       }
       if (first_word === "end") {
         end_val = end_stack.pop();
         end_info[end_val] = index;
-        if (scope.inDef === true) {
+        start_word = start_stack.pop();
+        if (start_word === "def") {
           liner = "return so";
-          txt[index] = liner;
-          scope.inDef = false;
         }
+        console.log(end_info);
       }
       if (first_word === "else" || first_word === "elseif") {
         end_val = end_stack.pop();
@@ -102,14 +106,19 @@
         if (line[0] === "def") {
           scope[line[1]] = index;
           scope.argNames[index] = k.s(line, 2);
-          scope.inDef = true;
         }
       }
       if (second_word === "=") {
         new_lines.push(k(liner).s(end_pos_2 + 1));
         new_lines.push(k(liner).s(0, end_pos_2) + " so");
+        index += 2;
+      } else if (first_word === "if") {
+        new_lines.push(k(liner).s(end_pos + 1));
+        new_lines.push(k(liner).s(0, end_pos) + " so");
+        index += 2;
       } else {
         new_lines.push(liner);
+        index += 1;
       }
     }
     txt = new_lines;
