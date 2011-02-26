@@ -43,6 +43,7 @@
         });
       } else if (value.match(/^[^A-Za-z0-9\.\"]/)) {
         console.log("what!!");
+        vars[name] = '"' + value + '"';
       } else {
         if (!k.startsWith(value, ".")) {
           value = "." + value;

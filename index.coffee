@@ -28,7 +28,7 @@ makeVars = (vars) ->
     else if value.match(/^[^A-Za-z0-9\.\"]/)
 
       console.log "what!!"
-      #vars[name] = '"'+value+'"'
+      vars[name] = '"'+value+'"'
     else
       if not k.startsWith(value, ".")
         value = "." + value

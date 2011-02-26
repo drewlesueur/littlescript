@@ -1,11 +1,6 @@
-go to http://littlescript.the.tl
-A programming language to code on a mobile phone.
-Based of GOTOs and Global variables.
+[see a live demo at http://littlescript.the.tl](http://littlescript.the.tl)
 
-Control is a first class citizen.
-http://en.wikipedia.org/wiki/Control_flow
-
-
+A programming language to code on a mobile phone.  
 
 #variable assignment
 
@@ -13,16 +8,29 @@ http://en.wikipedia.org/wiki/Control_flow
     person = {}
     arr = []
     other_arr = arr
-    url = string http://twitter.com/drewlesueur
-    other_string = " this is a string too
+    name = "Drew"
+
+#Strings
+    name = "Drew"
+    funny_str = string this goes to the end of the line
+    multi = "
+      strings can be mulit line.. watch out for extra spacing though
+
+    "
+    var = "variables"
+    stuff = {}
+    stuff.language = "LittleScript"
+    interp = "you can even interoplate #{var} in #{stuff.language}"
+
 
 #objects and arrays
 
-    name = string Drew LeSueur
     person = {}
-    person.name = name
-    prop = string height
-    person..prop = string 5'8
+    person.name = "Drew LeSueur"
+    prop = "height"
+    # double dot is like []
+    person..prop = "5'8"
+    # similar to person[prop] = "5'8"
 
     awards = []
     awards.0 = " my first award
