@@ -58,7 +58,6 @@
     functions = [];
     scope = {};
     txt = txt.split("\n");
-    scope.lines = txt;
     scope.split_lines = [];
     scope.set_pc = -1;
     scope.stack = [];
@@ -75,7 +74,9 @@
       }
       first_word = k.s(liner, 0, end_pos);
       end_pos_2 = liner.indexOf(" ", end_pos + 1);
-      second_word = k.s(liner, end_pos + 1, end_pos_2 - end_pos);
+      second_word = k.s(liner, end_pos + 1, end_pos_2 - end_pos - 1);
+      console.log("Second word is " + second_word + ".");
+      console.log(end_pos_2, end_pos);
       if (first_word === "if" || first_word === "def" || first_word === "begin") {
         end_stack.push(index);
       }
@@ -105,13 +106,14 @@
         }
       }
       if (second_word === "=") {
-        new_lines.push(k(liner).s(end_pos_2 + 2));
+        new_lines.push(k(liner).s(end_pos_2 + 1));
         new_lines.push(k(liner).s(0, end_pos_2) + " so");
       } else {
         new_lines.push(liner);
       }
     }
     txt = new_lines;
+    scope.lines = txt;
     for (index = 0, _len2 = txt.length; index < _len2; index++) {
       line = txt[index];
       line = k.trimLeft(line);

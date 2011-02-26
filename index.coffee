@@ -40,7 +40,6 @@ parse = window.parse = (txt) ->
   functions = []
   scope = {}
   txt = txt.split "\n"
-  scope.lines = txt
   scope.split_lines = []
   scope.set_pc = -1
   scope.stack = []
@@ -56,8 +55,10 @@ parse = window.parse = (txt) ->
     if end_pos is -1 then end_pos = liner.length
     first_word = k.s liner, 0, end_pos
     end_pos_2 = liner.indexOf(" ", end_pos + 1)
-    second_word = k.s liner, end_pos+1, end_pos_2 - end_pos
+    second_word = k.s liner, end_pos+1, end_pos_2 - end_pos-1
     
+    console.log "Second word is #{second_word}."
+    console.log end_pos_2, end_pos
     if first_word in ["if", "def", "begin"]
       end_stack.push index
     if first_word in ["end"]
@@ -82,12 +83,13 @@ parse = window.parse = (txt) ->
         scope.inDef = true
 
     if second_word == "="
-      new_lines.push k(liner).s(end_pos_2 + 2)
+      new_lines.push k(liner).s(end_pos_2 + 1)
       new_lines.push k(liner).s(0, end_pos_2) + " so"
     else 
       new_lines.push liner
 
   txt = new_lines
+  scope.lines = txt
 
   for line, index in txt
     line = k.trimLeft line
