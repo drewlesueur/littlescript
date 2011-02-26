@@ -21,7 +21,8 @@ makeVars = (vars) ->
       vars[name] = "[]"
     else if k.startsWith(value, '"') or k.startsWith(value, "'")
       vars[name] = value
-    else if value.match(/^[^A-Za-z0-9\.]/)
+    else if value.match(/^[^A-Za-z0-9\.\"]/)
+      console.log "what!!"
       vars[name] = '"'+value+'"'
     else
       if not k.startsWith(value, ".")
@@ -53,6 +54,7 @@ parse = window.parse = (txt) ->
   index = 0
   #first pass
   for liner in txt
+    liner = k.trimLeft liner
     end_pos = liner.indexOf(" ")
     if end_pos is -1 then end_pos = liner.length
     first_word = k.s liner, 0, end_pos
@@ -77,7 +79,7 @@ parse = window.parse = (txt) ->
       end_info[end_val] = index
       end_stack.push index
 
-    if not (k(liner).startsWith("string") or k(liner).startsWith('"') or k(liner).startsWith('`') or k(liner).startsWith('str'))
+    if not (k(liner).startsWith("string") or k(liner).startsWith('"') or k(liner).startsWith('`'))
       line = k.trimLeft liner
       line = k.trimRight line
       line = line.replace /\s+/, " "
@@ -90,7 +92,7 @@ parse = window.parse = (txt) ->
       new_lines.push k(liner).s(end_pos_2 + 1)
       new_lines.push k(liner).s(0, end_pos_2) + " so"
       index += 2
-    else if first_word is "if"
+    else if first_word in ["if", "log"]
       new_lines.push k(liner).s(end_pos + 1)
       new_lines.push k(liner).s(0, end_pos) + " so"
       index += 2
@@ -107,9 +109,6 @@ parse = window.parse = (txt) ->
     code += "/* #{index} */function(scope) {"
     if k.startsWith(line, "string") || k.startsWith(line, '"')
       code += "scope.so = \"" + k.s(line, line.indexOf(" ") + 1) + '"'
-    else if k.startsWith line, "str"
-      code += interpolate "{{varName}} = \"#{k.s(line, line.indexOf(' ', 4)+1)}\"", 
-        varName: k.s(line, 4, line.indexOf(" ", 4)-4)
     else if k.startsWith line, "`"
       code += "scope.so = " +  k.s(line, line.indexOf(" ") + 1)
     else if k.startsWith line, "#"

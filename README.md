@@ -21,7 +21,7 @@ http://en.wikipedia.org/wiki/Control_flow
     name = string Drew LeSueur
     person = {}
     person.name = name
-    prop = "height"
+    prop = string height
     person..prop = string 5'8
 
     awards = []
@@ -39,11 +39,9 @@ http://en.wikipedia.org/wiki/Control_flow
 
     y = 0
     if y
-      s = string y is truthy
-      log s
+      log string y is truthy
     else
-      s = string y is falsy
-      log s
+      log string y is falsy
     end
 
 #functions

@@ -33,7 +33,8 @@
         vars[name] = "[]";
       } else if (k.startsWith(value, '"') || k.startsWith(value, "'")) {
         vars[name] = value;
-      } else if (value.match(/^[^A-Za-z0-9\.]/)) {
+      } else if (value.match(/^[^A-Za-z0-9\.\"]/)) {
+        console.log("what!!");
         vars[name] = '"' + value + '"';
       } else {
         if (!k.startsWith(value, ".")) {
@@ -70,6 +71,7 @@
     index = 0;
     for (_i = 0, _len = txt.length; _i < _len; _i++) {
       liner = txt[_i];
+      liner = k.trimLeft(liner);
       end_pos = liner.indexOf(" ");
       if (end_pos === -1) {
         end_pos = liner.length;
@@ -98,7 +100,7 @@
         end_info[end_val] = index;
         end_stack.push(index);
       }
-      if (!(k(liner).startsWith("string") || k(liner).startsWith('"') || k(liner).startsWith('`') || k(liner).startsWith('str'))) {
+      if (!(k(liner).startsWith("string") || k(liner).startsWith('"') || k(liner).startsWith('`'))) {
         line = k.trimLeft(liner);
         line = k.trimRight(line);
         line = line.replace(/\s+/, " ");
@@ -112,7 +114,7 @@
         new_lines.push(k(liner).s(end_pos_2 + 1));
         new_lines.push(k(liner).s(0, end_pos_2) + " so");
         index += 2;
-      } else if (first_word === "if") {
+      } else if (first_word === "if" || first_word === "log") {
         new_lines.push(k(liner).s(end_pos + 1));
         new_lines.push(k(liner).s(0, end_pos) + " so");
         index += 2;
@@ -130,10 +132,6 @@
       code += "/* " + index + " */function(scope) {";
       if (k.startsWith(line, "string") || k.startsWith(line, '"')) {
         code += "scope.so = \"" + k.s(line, line.indexOf(" ") + 1) + '"';
-      } else if (k.startsWith(line, "str")) {
-        code += interpolate("{{varName}} = \"" + (k.s(line, line.indexOf(' ', 4) + 1)) + "\"", {
-          varName: k.s(line, 4, line.indexOf(" ", 4) - 4)
-        });
       } else if (k.startsWith(line, "`")) {
         code += "scope.so = " + k.s(line, line.indexOf(" ") + 1);
       } else if (k.startsWith(line, "#")) {} else {
