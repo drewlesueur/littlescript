@@ -13,11 +13,13 @@ http://en.wikipedia.org/wiki/Control_flow
     person = {}
     arr = []
     other_arr = arr
-    str name Drew LeSueur
     url = string http://twitter.com/drewlesueur
+    other_string = " this is a string too
 
 #objects and arrays
 
+    name = string Drew LeSueur
+    person = {}
     person.name = name
     prop = "height"
     person..prop = string 5'8
