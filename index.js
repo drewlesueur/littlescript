@@ -33,6 +33,14 @@
         vars[name] = "[]";
       } else if (k.startsWith(value, '"') || k.startsWith(value, "'")) {
         vars[name] = value;
+        vars[name] = value.replace(/\#\{([^\\}]*)\}/g, function(a, b) {
+          var varso;
+          varso = {
+            name: b
+          };
+          varso = makeVars(varso);
+          return '" +' + varso['name'] + '+ "';
+        });
       } else if (value.match(/^[^A-Za-z0-9\.\"]/)) {
         console.log("what!!");
       } else {

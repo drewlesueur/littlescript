@@ -21,6 +21,10 @@ makeVars = (vars) ->
       vars[name] = "[]"
     else if k.startsWith(value, '"') or k.startsWith(value, "'")
       vars[name] = value
+      vars[name] = value.replace /\#\{([^\\}]*)\}/g, (a,b) ->
+        varso = name: b
+        varso = makeVars varso
+        return '" +' + varso['name'] + '+ "'
     else if value.match(/^[^A-Za-z0-9\.\"]/)
 
       console.log "what!!"
