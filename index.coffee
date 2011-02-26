@@ -43,7 +43,10 @@ interpolate = (str, rawVars) ->
   _.template str, makeVars rawVars
 
 parse = window.parse = (txt) ->
-  txt = txt.replace /(\"[^\\][\s\S]*[^\\]\")/g, (a) ->
+  txt = txt.replace /\\"/g, '\\x22'
+  txt = txt.replace /(\"[^\"]*[^\\]\")/g, (a, b) ->
+    console.log a
+    console.log b
     return a.replace(/\n/g, '\\x0A').replace(/\n/g, '\\x0D').replace(/\x20/g, '\\x20')
   console.log txt
 

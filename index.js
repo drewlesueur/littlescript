@@ -63,7 +63,10 @@
   };
   parse = window.parse = function(txt) {
     var code, compiled, condition, end_info, end_pos, end_pos_2, end_stack, end_val, first_word, functions, index, line, liner, new_lines, ret, scope, second_word, start_stack, start_word, _i, _len, _len2;
-    txt = txt.replace(/(\"[^\\][\s\S]*[^\\]\")/g, function(a) {
+    txt = txt.replace(/\\"/g, '\\x22');
+    txt = txt.replace(/(\"[^\"]*[^\\]\")/g, function(a, b) {
+      console.log(a);
+      console.log(b);
       return a.replace(/\n/g, '\\x0A').replace(/\n/g, '\\x0D').replace(/\x20/g, '\\x20');
     });
     console.log(txt);
