@@ -123,6 +123,7 @@ If you want to instead of functions
 #TODO
 
 1. Add `for in` loops and `for of` loops
+1. Add `elseif`s. 
 2. For expressiveness, consider adding the following global handlers
 
     * `onBeforeSetVariable` to be called before a variable is set. You can override what happens
@@ -137,3 +138,4 @@ If you want to instead of functions
 4. Standard library
 4. Possibly parens for nesting
 5. Reevaluate what should go in the first pass, and what should go in the second pass
+6. Be cautious about adding too much
