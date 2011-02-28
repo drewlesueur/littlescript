@@ -129,8 +129,11 @@ If you want to instead of functions
     * `onSetVariable` to be called when a variable has been set
     * `onBeforeGetVariable` to be called before a variable is gotten. You can override what happens
     * `onGetVariable` to be called after a variable is gotten
-    *  a `set!` function that sets a variable with no trigger
-    * `a `get!` function that gets a variable with no trigger
+    * a `set!` function that sets a variable with no trigger
+    * a `get!` function that gets a variable with no trigger
     * (even a `onBeforeExecuteLine` ... is that getting too meta?)
 
-3. possibly parens
+3. Write a compiler for other languages, Ruby, PHP, PHP 4, Bash, C, VB, C#, Java
+4. Standard library
+4. Possibly parens for nesting
+5. Reevaluate what should go in the first pass, and what should go in the second pass
