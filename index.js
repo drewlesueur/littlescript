@@ -1,5 +1,5 @@
 (function() {
-  var interpolate, makeVars, parse, updateCodeForFunctionCall;
+  var interpolate, makeVars, parse, tab, tab_space, updateCodeForFunctionCall;
   _.templateSettings = {
     interpolate: /\{\{(.+?)\}\}/g
   };
@@ -42,7 +42,11 @@
           return '" +' + varso['name'] + '+ "';
         });
       } else if (value.match(/^[^A-Za-z0-9\.\"\$\_]/)) {
-        vars[name] = '"' + value + '"';
+        if (k.s(value, 0, 1) === ':') {
+          vars[name] = '"' + k(value).s(1) + '"';
+        } else {
+          vars[name] = '"' + value + '"';
+        }
       } else {
         if (!k.startsWith(value, ".")) {
           value = "." + value;
@@ -61,12 +65,16 @@
   interpolate = function(str, rawVars) {
     return _.template(str, makeVars(rawVars));
   };
+  tab = 0;
+  tab_space = 0;
   parse = window.parse = function(txt) {
     var code, compiled, condition, end_info, end_pos, end_pos_2, end_stack, end_val, first_word, functions, index, line, liner, new_lines, ret, scope, second_word, start_stack, start_word, _i, _len, _len2;
     txt = txt.replace(/\\"/g, '\\x22');
     txt = txt.replace(/(\"[^\"]*[^\\]\")/g, function(a, b) {
       return a.replace(/\n/g, '\\x0A').replace(/\n/g, '\\x0D').replace(/\x20/g, '\\x20');
     });
+    txt = txt.replace(/\\\n/g, ' ');
+    console.log(txt);
     functions = [];
     scope = {};
     txt = txt.split("\n");
@@ -93,7 +101,7 @@
       if (first_word === "if") {
         end_stack.push(index + 1);
         start_stack.push(first_word);
-      } else if (first_word === "def" || first_word === "begin") {
+      } else if (first_word === "def" || first_word === "begin" || first_word === "for") {
         end_stack.push(index);
         start_stack.push(first_word);
       }
@@ -103,6 +111,9 @@
         start_word = start_stack.pop();
         if (start_word === "def") {
           liner = "return so";
+        }
+        if (start_word === "for") {
+          liner = "ifgoto _i " + end_val;
         }
       }
       if (first_word === "else" || first_word === "elseif") {
@@ -128,7 +139,7 @@
         new_lines.push(k(liner).s(end_pos + 1));
         new_lines.push(k(liner).s(0, end_pos) + " so");
         index += 2;
-      } else {
+      } else if (first_word === 'for') {} else {
         new_lines.push(liner);
         index += 1;
       }
@@ -146,7 +157,7 @@
         code += "scope.so = " + k.s(line, line.indexOf(" ") + 1);
       } else if (k.startsWith(line, "#")) {} else {
         line = k.trimRight(line);
-        line = line.replace(/\s+/, " ");
+        line = line.replace(/\s+/g, " ");
         line = line.split(" ");
         scope.split_lines[index] = line;
         if (line[0] === "set" || line[0] === "=") {

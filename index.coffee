@@ -26,7 +26,10 @@ makeVars = (vars) ->
         varso = makeVars varso
         return '" +' + varso['name'] + '+ "'
     else if value.match(/^[^A-Za-z0-9\.\"\$\_]/)
-      vars[name] = '"'+value+'"'
+      if k.s(value, 0, 1) is ':'
+        vars[name] = '"' + k(value).s(1) + '"'
+      else
+        vars[name] = '"'+value+'"'
     else
       if not k.startsWith(value, ".")
         value = "." + value
@@ -40,11 +43,17 @@ makeVars = (vars) ->
 interpolate = (str, rawVars) ->
   _.template str, makeVars rawVars
 
+#not yet
+tab = 0
+tab_space = 0
+
 parse = window.parse = (txt) ->
   txt = txt.replace /\\"/g, '\\x22'
   txt = txt.replace /(\"[^\"]*[^\\]\")/g, (a, b) ->
     return a.replace(/\n/g, '\\x0A').replace(/\n/g, '\\x0D').replace(/\x20/g, '\\x20')
+  txt = txt.replace /\\\n/g, ' '
 
+  console.log txt
   functions = []
   scope = {}
   txt = txt.split "\n"
@@ -71,7 +80,7 @@ parse = window.parse = (txt) ->
     if first_word in ["if"]
       end_stack.push index + 1
       start_stack.push first_word
-    else if first_word in ["def", "begin"]
+    else if first_word in ["def", "begin", "for"]
       end_stack.push index
       start_stack.push first_word
     if first_word in ["end"]
@@ -80,6 +89,8 @@ parse = window.parse = (txt) ->
       start_word = start_stack.pop()
       if start_word == "def"
         liner = "return so"
+      if start_word == "for"
+
     if first_word in ["else", "elseif"] #these act as both
       end_val = end_stack.pop()
       end_info[end_val] = index
@@ -102,6 +113,8 @@ parse = window.parse = (txt) ->
       new_lines.push k(liner).s(end_pos + 1)
       new_lines.push k(liner).s(0, end_pos) + " so"
       index += 2
+    else if first_word in ['for']
+       
     else 
       new_lines.push liner
       index += 1
@@ -122,7 +135,7 @@ parse = window.parse = (txt) ->
       #if vs hash
     else
       line = k.trimRight line
-      line = line.replace /\s+/, " "
+      line = line.replace /\s+/g, " "
       line = line.split " "
       scope.split_lines[index] = line
       if line[0] is "set" or line[0] is "="
