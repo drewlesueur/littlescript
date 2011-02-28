@@ -122,14 +122,15 @@ If you want to instead of functions
 
 #TODO
 
-1. Add `for in` loops and `for of loops`
+1. Add `for in` loops and `for of` loops
 2. For expressiveness, consider adding the following global handlers
 
     * `onBeforeSetVariable` to be called before a variable is set. You can override what happens
     * `onSetVariable` to be called when a variable has been set
     * `onBeforeGetVariable` to be called before a variable is gotten. You can override what happens
     * `onGetVariable` to be called after a variable is gotten
-    * `a set! function that sets a variable with no trigger`
-    * `a get! function that gets a variable with no trigger`
+    *  a `set!` function that sets a variable with no trigger
+    * `a `get!` function that gets a variable with no trigger
+    * (even a `onBeforeExecuteLine` ... is that getting too meta?)
 
 3. possibly parens
