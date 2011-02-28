@@ -1,6 +1,10 @@
 [see a live demo at http://littlescript.the.tl](http://littlescript.the.tl)
 
-A programming language to code on a mobile phone.  
+# Hello World
+    
+    log "hello world"
+    name = "Drew"
+    log "hello #{name}"
 
 #variable assignment
 
