@@ -146,3 +146,30 @@ If you want to instead of functions
 6. Right now functions are just integers. Allow an optional `[int, my_scope]` array for functions
 6. Think about expressiveness and `get`, `meta_get`; `set`, `meta_set`; `call`, `meta_call`
 6. Be cautious about adding too much
+
+
+
+ try function calls like 
+    st = []
+    goto end_funcs
+
+    label eat
+      log "eat"
+      ` scope.st.push(scope.pc + 2)
+        goto grapes
+        ` scope.st.pop()
+        goto so
+         
+
+         label grapes
+           log "grapes"
+           ` scope.st.pop()
+         goto so
+
+         label end_funcs
+
+
+         ` scope.st.push(scope.pc + 2)
+         goto eat
+
+

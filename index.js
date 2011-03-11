@@ -112,9 +112,6 @@
         if (start_word === "def") {
           liner = "return so";
         }
-        if (start_word === "for") {
-          liner = "ifgoto _i " + end_val;
-        }
       }
       if (first_word === "else" || first_word === "elseif") {
         end_val = end_stack.pop();
@@ -144,6 +141,7 @@
         index += 1;
       }
     }
+    window['new_lines'] = new_lines;
     txt = new_lines;
     scope.lines = txt;
     for (index = 0, _len2 = txt.length; index < _len2; index++) {

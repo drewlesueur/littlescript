@@ -89,7 +89,7 @@ parse = window.parse = (txt) ->
       start_word = start_stack.pop()
       if start_word == "def"
         liner = "return so"
-      if start_word == "for"
+      #if start_word == "for"
 
     if first_word in ["else", "elseif"] #these act as both
       end_val = end_stack.pop()
@@ -119,6 +119,7 @@ parse = window.parse = (txt) ->
       new_lines.push liner
       index += 1
 
+  window['new_lines'] = new_lines
   txt = new_lines
   scope.lines = txt
 
