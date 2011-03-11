@@ -142,6 +142,7 @@ If you want to instead of functions
 4. Standard library
 4. Possibly parens for nesting
 5. Reevaluate what should go in the first pass, and what should go in the second pass
+5. Possibly rewrite code for function calls instead of having it handled thru straight js
 6. Right now functions are just integers. Allow an optional `[int, my_scope]` array for functions
 6. Think about expressiveness and `get`, `meta_get`; `set`, `meta_set`; `call`, `meta_call`
 6. Be cautious about adding too much
