@@ -120,6 +120,7 @@ parse = window.parse = (txt) ->
       index += 1
 
   window['new_lines'] = new_lines
+
   txt = new_lines
   scope.lines = txt
 
@@ -242,4 +243,4 @@ parse = window.parse = (txt) ->
       scope.pc ++
     }
   """
-  return compiled
+  return [new_lines, compiled]
