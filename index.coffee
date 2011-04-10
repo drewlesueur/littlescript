@@ -5,24 +5,45 @@ compile = (code) ->
   scope = {}
   code = code.split "\n"  
   for line in code
-    console.log line 
     line = line.split " "
     func = line[0]
     if func.length is 0 then continue
     args = _.s line, 1
     functions.push """
       function() {
-        #{func}(\"#{args.join("\", \"")}");
+        instructionSet.#{func}(\"#{args.join("\", \"")}");
       }
     """
   
   """ 
-    function set(name, val) {
-      scope[name] = val
+    instructionSet = {
+      'set' : function(name, val) {
+        scope.so = scope[this.get(name)] = this.get(val)
+        return scope.so
+      },
+      'label': function(name) {
+        return this.set(this.get(name), scope.pc);
+      },
+      'log': function(name) {
+        scope.so = this.get(name)
+        console.log(scope.so)
+        return scope.so
+      },
+      'get' : function(name) {
+        if (_.s(name, 0, 1) !== "'") {
+          scope.so = scope[name]
+        } else {
+          
+          scope.so = _.s(name, 1)
+        }
+        return scope.so
+      },
+      'add' : function(a, b) {
+        scope.so = this.get(a) - 0 + this.get(b) - 0
+        return scope.so
+      }
     }
-    function label(name) {
-      set(name, scope.pc);
-    }
+
     var scope = #{JSON.stringify(scope)};
     functions = [\n#{functions.join(',\n')}]
     scope.pc = 0
@@ -33,7 +54,6 @@ compile = (code) ->
         console.log(scope);
         break;  
       }
-      console.log(scope.pc)
       functions[scope.pc](scope);
       scope.second_last_pc = scope.last_pc
       scope.last_pc = scope.pc
