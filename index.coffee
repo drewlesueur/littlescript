@@ -1,4 +1,4 @@
-scope = {}
+sope = {}
 functions = []
 compile = (code) ->
   functions = []
@@ -9,6 +9,8 @@ compile = (code) ->
     func = line[0]
     if func.length is 0 then continue
     args = _.s line, 1
+    # you could turn `'val` to scope["val"] here
+    # right now you are doing it at run time
     functions.push """
       function() {
         instructionSet.#{func}(\"#{args.join("\", \"")}");

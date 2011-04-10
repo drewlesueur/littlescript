@@ -1,9 +1,9 @@
 (function() {
-  var compile, functions, scope;
-  scope = {};
+  var compile, functions, sope;
+  sope = {};
   functions = [];
   compile = function(code) {
-    var args, func, line, _i, _len;
+    var args, func, line, scope, _i, _len;
     functions = [];
     scope = {};
     code = code.split("\n");
