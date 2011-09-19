@@ -18,9 +18,18 @@ window.parseParens = (code) ->
 
 
 
-      
+replaceQuotes = (txt) ->
+  txt = txt.replace /\\"/g, '\\x22'
+  #"
+  txt = txt.replace /(\"[^\"]*[^\\]\")/g, (a, b) ->
+    #"
+    return a.replace(/\n/g, '\\x0A').replace(/\n/g, '\\x0D').replace(/\x20/g, '\\x20')
+  txt = txt.replace /\\\n/g, ' '
+  txt
+
 
 compile = (code) ->
+  code = replaceQuotes code
   get = (name) ->
     if _.isNumeric(name) 
       scope.so = name
@@ -46,11 +55,12 @@ compile = (code) ->
     # right now you are doing it at run time
     if func == "label"
       scope[get(args[0])] = index
-    functions.push """
-      function() {
-        instructionSet.#{func}(\"#{args.join("\", \"")}");
-      }
-    """
+    else
+      functions.push """
+        function() {
+          instructionSet.#{func}("#{args.join("\", \"")}");
+        }
+      """
   
   """ 
     instructionSet = {
